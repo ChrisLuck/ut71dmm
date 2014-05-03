@@ -1,0 +1,85 @@
+                          Uni-T UT71C DMM-Software
+                            2014 Christian Lück
+
+
+--------------------------------------------------------------------------------
+What this software is supposed to do:
+
+ Reads data from meter and prints it to stdout in a comma-separated format.
+ This data can be imported with libreoffice or for example octave
+ to get graphical representations.
+
+ This software is designed for the USB-datacable with the following hardware:
+ IC-imprint:         "WCH CH9325"
+ lsusb information:  "QinHeng Electronics HID-based serial adapater"
+                     idVendor  : 0x1a86
+                     idProduct : 0xe008
+
+--------------------------------------------------------------------------------
+Supported Hardware:
+
+ 1) Tested:
+	Uni-T UT71C
+ 2) Might also work for:
+	Uni-T UT71A/B/C/E
+        Voltcraft VC-920 and VC-940
+
+--------------------------------------------------------------------------------
+This SW is based on the work of the following persons (thanks!):
+
+ Rainer Wetzel (http://diyftw.de/wiki/doku.php?id=projekte:ut61e)
+ Ralf Burger (http://www.erste.de/UT61/index.html)
+ Alan Ott (http://www.signal11.us/oss/hidapi/)
+
+--------------------------------------------------------------------------------
+Compile:
+
+ 1) cd into the directory where you found this readme (and the sourcefiles)
+ 2) clone hidapi: git clone git://github.com/signal11/hidapi.git
+ 3) make
+
+--------------------------------------------------------------------------------
+Usage:
+
+    unfortunately hw access is required -> sudo
+
+  - Note, that the cable is a bit buggy and might refuse to work correctly.
+    To fix this, you can execute the 'cablefix.sh' script which suspends the
+    cable.
+    Thanks to Ralf Burger, who discovered this bug + workaround.
+    Further information about this: http://erste.de/UT61/index.html
+
+  - only 1 interface cable connected, autodetect:
+        sudo ./ut71dmm
+
+  - multiple interface cables connected, use first cable:
+        sudo ./ut71dmm
+
+  - multiple cables, find out the available adresses:
+        lsusb | grep 1a86:e008
+
+    will output the available devices:
+        Bus 002 Device 032: ID 1a86:e008 QinHeng Electronics ...
+        Bus 002 Device 031: ID 1a86:e008 QinHeng Electronics ...
+
+    Bus X Device Y converts to XXXX:YYYY:00, with X and Y in hex
+
+    now a specific device can be used by:
+        sudo ./ut71dmm 0002:0020:00
+
+--------------------------------------------------------------------------------
+License:
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, write to the Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
