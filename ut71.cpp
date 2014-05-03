@@ -127,6 +127,7 @@ void ut71::parse(unsigned char * data) {
     digits[4] = (data[4] & 0x0F) + '0';
     digits[5] ='\0';
 
+    //detect overload (UT71C: shows OL on display)
     if(digits[0] == 0x0a + '0' &&
        digits[1] == 0x0a + '0' &&
        digits[2] == 0x00 + '0' &&
@@ -136,6 +137,7 @@ void ut71::parse(unsigned char * data) {
     else
         this->overload = false;
 
+    //detect low-count-mode (4000 count on UT71)
     if(this->overload == false && digits[4] == 0x0a + '0'){
         this->lowcountmode = true;
         digits[4] = '0';
