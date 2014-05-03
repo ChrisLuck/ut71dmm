@@ -110,64 +110,99 @@ ut71::~ut71() {}
 
 
 bool ut71::check(unsigned char * data) {
-	if(data[9] != 0x0D)
-		return false;
-	if(data[10] != 0x8A)
-		return false;
+    if(data[9] != 0x0D)
+        return false;
+    if(data[10] != 0x8A)
+        return false;
 
-	return true;
+    return true;
 }
 
 void ut71::parse(unsigned char * data) {
-	char digits[6];
-	digits[0] = (data[0] & 0x0F) + '0';
-	digits[1] = (data[1] & 0x0F) + '0';
-	digits[2] = (data[2] & 0x0F) + '0';
-	digits[3] = (data[3] & 0x0F) + '0';
-	digits[4] = (data[4] & 0x0F) + '0';
-	digits[5] ='\0';
+    char digits[6];
+    digits[0] = (data[0] & 0x0F) + '0';
+    digits[1] = (data[1] & 0x0F) + '0';
+    digits[2] = (data[2] & 0x0F) + '0';
+    digits[3] = (data[3] & 0x0F) + '0';
+    digits[4] = (data[4] & 0x0F) + '0';
+    digits[5] ='\0';
 
-	this->digits = atoi(digits);
+    if(digits[0] == 0x0a + '0' &&
+       digits[1] == 0x0a + '0' &&
+       digits[2] == 0x00 + '0' &&
+       digits[3] == 0x0c + '0' &&
+       digits[4] == 0x0a + '0')
+        this->overload = true;
+    else
+        this->overload = false;
 
-	//extract sign
-	if (data[8] & 0x04){
-		this->digits *= -1;
-		this->sign = NEG;
-	}
-	else
-		this->sign = POS;
+    if(this->overload == false && digits[4] == 0x0a + '0'){
+        this->lowcountmode = true;
+        digits[4] = '0';
+    }
+    else{
+        this->lowcountmode = false;
+    }
 
-	//extract AC/DC/AC+DC setting
-	this->acdcmode = (acdcmodeenum)(data[7] & 0x0F);
+    this->digits = atoi(digits);
 
-	//extract rangemode (manual/auto)
-	this->rangemode = (rangemodeenum)(data[8] & 0x01);
+    //extract sign
+    if(data[8] & 0x04){
+        this->digits *= -1;
+        this->sign = NEG;
+    }
+    else
+        this->sign = POS;
 
-	//extract mode
-	this->function = (functionenum)(data[6] & 0x0F);
-	//freq- and duty-function both have the same this->function value
-	//at this point.
-	//they can only be differentiated by the value of the sign-bit:
-	if(this->function == FREQ && this->sign == NEG){
-		this->function = DUTY;
-		this->rangemode = MANUAL;
-	}
+    //extract AC/DC/AC+DC setting
+    this->acdcmode = (acdcmodeenum)(data[7] & 0x0F);
+    if(this->acdcmode < 0 || this->acdcmode > 3){
+        printf("Error: this->acdcmode == %d\n", this->acdcmode);
+        this->acdcmode = (acdcmodeenum)0;
+    }
 
-	//extract range
-	this->rangeindex = data[5] & 0x0F;
+    //extract rangemode (manual/auto)
+    this->rangemode = (rangemodeenum)(data[8] & 0x01);
+    if(this->rangemode < 0 || this->rangemode > 1){
+        printf("Error: this->rangemode == %d\n", this->rangemode);
+        this->rangemode = (rangemodeenum)0;
+    }
 
-	//calc value
-	long double multi = this->multlut[this->function][this->rangeindex];
-	this->value = ((long double)this->digits) * multi;
+    //extract mode
+    this->function = (functionenum)(data[6] & 0x0F);
+    if(this->function < 0 || this->function > 16){
+        printf("Error: this->function == %d\n", this->function);
+        this->function = (functionenum)0;
+    }
+    //freq- and duty-function both have the same this->function value
+    //at this point.
+    //they can only be differentiated by the value of the sign-bit:
+    if(this->function == FREQ && this->sign == NEG){
+        this->function = DUTY;
+        this->rangemode = MANUAL;
+    }
+
+    //extract range
+    this->rangeindex = data[5] & 0x0F;
+    if(this->rangeindex < 0 || this->rangeindex > 7){
+        printf("Error: this->rangeindex == %d\n", this->rangeindex);
+        this->rangeindex = 0;
+    }
+
+    //calc value
+    long double multi = this->multlut[this->function][this->rangeindex];
+    this->value = ((long double)this->digits) * multi;
 
 
-	//print it, comma separated
-	fprintf(stdout, "%s, ", this->functionlut[this->function]);
-	fprintf(stdout, "%s, ", this->acdcmodelut[this->acdcmode]);
-	fprintf(stdout, "%s, ", this->rangemodelut[this->rangemode]);
-	fprintf(stdout, "%s, ", this->rangelut[this->function][this->rangeindex]);
-	fprintf(stdout, "%d, ", this->digits);
-	fprintf(stdout, "%Lf;\n", this->value);
-        fflush(stdout);
+    //print it, comma separated
+    fprintf(stdout, "%d, ", this->overload);
+    fprintf(stdout, "%d, ", this->lowcountmode);
+    fprintf(stdout, "%s, ", this->functionlut[this->function]);
+    fprintf(stdout, "%s, ", this->acdcmodelut[this->acdcmode]);
+    fprintf(stdout, "%s, ", this->rangemodelut[this->rangemode]);
+    fprintf(stdout, "%s, ", this->rangelut[this->function][this->rangeindex]);
+    fprintf(stdout, "%d, ", this->digits);
+    fprintf(stdout, "%.4Le;\n", this->value);
+    fflush(stdout);
 }
 
